@@ -1,0 +1,80 @@
+version: '3.8'
+services:
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.4.1
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #   ports:
+  #     - "2181:2181"
+
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.4.1
+  #   depends_on:
+  #     - zookeeper
+  #   ports:
+  #     - "9092:9092"
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui:latest
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     KAFKA_CLUSTERS_0_NAME: local
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #     KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  # rabbitmq:
+  #   image: rabbitmq:management
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
+
+  splunk:
+    image: splunk/splunk:latest
+    container_name: splunk
+    environment:
+      SPLUNK_START_ARGS: "--accept-license --answer-yes"
+      SPLUNK_PASSWORD: "changeme"
+      SPLUNK_HEC_TOKEN: "fd31eb60-1497-4438-926d-3640a4e9d399"
+      SPLUNK_ENABLE_HEC: "true"  # Habilita o HEC
+      SPLUNK_HEC_PORT: "8088"    # Define a porta do HEC
+    ports:
+      - "8000:8000"    # Porta da interface web do Splunk
+      - "8088:8088"    # Porta do HTTP Event Collector (HEC)      
+    volumes:
+      - splunk_data:/opt/splunk/var
+
+  fluentd:
+    image: fluentd
+    container_name: fluentd
+    volumes:
+      - fluentd_data:/fluentd/etc
+    ports:
+      - "24224:24224" # Porta para receber logs da aplicação
+      - "5140:5140"
+      - "24220:24220"   # Porta para logs em Syslog (opciodockernal)
+    environment:
+      - FLUENTD_CONF=fluent.conf  # Nome do arquivo de configuração do Fluentd      
+
+  myapp:
+    image: myapp
+    container_name: myapp
+    ports:
+      - "8081:8081"       
+    environment:
+      - LOGGING_DRIVER=fluentd  # Use Fluentd como driver de logs
+      - FLUENTD_HOST=fluentd  # Nome do serviço Fluentd
+    depends_on:
+      - fluentd
+      - splunk          
+        
+volumes:
+  splunk_data:        
+  fluentd_data:        
