@@ -45,6 +45,7 @@ services:
       SPLUNK_HEC_TOKEN: "fd31eb60-1497-4438-926d-3640a4e9d399"
       SPLUNK_ENABLE_HEC: "true"  # Habilita o HEC
       SPLUNK_HEC_PORT: "8088"    # Define a porta do HEC
+      SPLUNK_ADD: hec,9997
     ports:
       - "8000:8000"    # Porta da interface web do Splunk
       - "8088:8088"    # Porta do HTTP Event Collector (HEC)      
